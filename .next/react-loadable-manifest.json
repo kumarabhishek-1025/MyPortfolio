@@ -1,0 +1,28 @@
+{
+  "app\\page.js -> @/components/three/GuidePath": {
+    "id": "app\\page.js -> @/components/three/GuidePath",
+    "files": [
+      "static/chunks/_app-pages-browser_components_three_GuidePath_jsx.js"
+    ]
+  },
+  "app\\page.js -> @/components/three/HeroScene": {
+    "id": "app\\page.js -> @/components/three/HeroScene",
+    "files": [
+      "static/chunks/_app-pages-browser_components_three_HeroScene_jsx.js"
+    ]
+  },
+  "node_modules\\@react-three\\drei\\core\\VideoTexture.js -> hls.js": {
+    "id": "node_modules\\@react-three\\drei\\core\\VideoTexture.js -> hls.js",
+    "files": []
+  },
+  "node_modules\\@react-three\\drei\\web\\FaceLandmarker.js -> @mediapipe/tasks-vision": {
+    "id": "node_modules\\@react-three\\drei\\web\\FaceLandmarker.js -> @mediapipe/tasks-vision",
+    "files": []
+  },
+  "node_modules\\next\\dist\\client\\dev\\hot-reloader\\app\\use-websocket.js -> @vercel/turbopack-ecmascript-runtime/browser/dev/hmr-client/hmr-client.ts": {
+    "id": "node_modules\\next\\dist\\client\\dev\\hot-reloader\\app\\use-websocket.js -> @vercel/turbopack-ecmascript-runtime/browser/dev/hmr-client/hmr-client.ts",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_next_dist_client_dev_noop-turbopack-hmr_js.js"
+    ]
+  }
+}
