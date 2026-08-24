@@ -1,14 +1,12 @@
 "use client";
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Icosahedron, Sparkles, Html, Float, Stars } from '@react-three/drei';
-import { useRef, useMemo, useEffect, Suspense } from 'react';
+import { useRef, useMemo, Suspense } from 'react';
 import * as THREE from 'three';
 import { isWebGLAvailable } from '@/lib/webgl';
 
 const ACCENT = '#22d3ee';
 const VIOLET = '#a855f7';
-const C_ACCENT = new THREE.Color(ACCENT);
-const C_VIOLET = new THREE.Color(VIOLET);
 
 function makeGlowTexture() {
   const c = document.createElement('canvas');
@@ -47,11 +45,10 @@ const FRESNEL_FRAG = `
 `;
 
 function NeuralCore() {
-  const followRef = useRef();
   const meshRef = useRef();
   const wireRef = useRef();
   const outerRef = useRef();
-  const nucleusMatRef = useRef();
+  const coreMatRef = useRef();
   const fresnelMatRef = useRef();
 
   const fresnelUniforms = useMemo(
@@ -65,50 +62,34 @@ function NeuralCore() {
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
-    const { x: px, y: py } = state.pointer;
-
-    // MOUSE-DRIVEN GLOBE: core tilts toward the cursor
-    if (followRef.current) {
-      followRef.current.rotation.y = THREE.MathUtils.damp(followRef.current.rotation.y, px * 0.85, 3.2, delta);
-      followRef.current.rotation.x = THREE.MathUtils.damp(followRef.current.rotation.x, -py * 0.55, 3.2, delta);
-    }
-
-    // proximity: how close the cursor is to the globe (0..1)
-    const near = Math.max(0, 1 - Math.hypot(px, py) / 1.1);
-
     if (meshRef.current) {
-      meshRef.current.rotation.x += delta * (0.15 + near * 0.5);
-      meshRef.current.rotation.y += delta * (0.2 + near * 0.65);
+      meshRef.current.rotation.x += delta * 0.15;
+      meshRef.current.rotation.y += delta * 0.2;
     }
     if (wireRef.current) {
       wireRef.current.rotation.x -= delta * 0.1;
       wireRef.current.rotation.y -= delta * 0.12;
-      wireRef.current.scale.setScalar(1 + Math.sin(t * 1.5) * 0.03 + near * 0.02);
+      wireRef.current.scale.setScalar(1 + Math.sin(t * 1.5) * 0.03);
     }
     if (outerRef.current) {
       outerRef.current.rotation.y += delta * 0.06;
       outerRef.current.rotation.z -= delta * 0.04;
     }
-    if (nucleusMatRef.current) {
-      nucleusMatRef.current.emissiveIntensity = 1.6 + Math.sin(t * 1.8) * 0.25 + near * 1.4;
+    if (coreMatRef.current) {
+      coreMatRef.current.emissiveIntensity = 0.35 + Math.sin(t * 1.8) * 0.15;
     }
-
-    // fresnel: hue drifts cyan -> violet, flares up when cursor approaches
     if (fresnelMatRef.current) {
-      const hueMix = (Math.sin(t * 0.45) + 1) * 0.18;
-      fresnelUniforms.uColor.value.copy(C_ACCENT).lerp(C_VIOLET, hueMix);
-      fresnelMatRef.current.uniforms.uIntensity.value =
-        1.0 + Math.sin(t * 1.2) * 0.22 + near * 0.9;
+      fresnelMatRef.current.uniforms.uIntensity.value = 1.0 + Math.sin(t * 1.2) * 0.25;
     }
   });
 
   return (
-    <group ref={followRef}>
+    <group>
       {/* glowing nucleus */}
       <mesh>
         <sphereGeometry args={[0.5, 32, 32]} />
         <meshStandardMaterial
-          ref={nucleusMatRef}
+          ref={coreMatRef}
           color={ACCENT}
           emissive={ACCENT}
           emissiveIntensity={1.6}
@@ -166,6 +147,8 @@ function NeuralCore() {
           depthWrite={false}
         />
       </mesh>
+
+      <pointLight color={ACCENT} intensity={2.2} distance={5} />
     </group>
   );
 }
@@ -214,16 +197,8 @@ const ORBITS = [
   },
 ];
 
-function Satellite({ item, env }) {
+function Satellite({ item }) {
   const glowTex = useMemo(makeGlowTexture, []);
-  const labelRef = useRef();
-
-  useFrame(() => {
-    if (labelRef.current) {
-      labelRef.current.style.opacity = String(env.scrollFade);
-    }
-  });
-
   return (
     <group>
       <sprite scale={[0.85, 0.85, 1]}>
@@ -241,11 +216,7 @@ function Satellite({ item, env }) {
         <meshStandardMaterial color={item.color} emissive={item.color} emissiveIntensity={2} />
       </mesh>
       <Html distanceFactor={8} center zIndexRange={[100, 0]} style={{ pointerEvents: 'none' }}>
-        <div
-          ref={labelRef}
-          className="px-2 py-1 rounded-md text-[10px] font-mono uppercase tracking-wider whitespace-nowrap glass border"
-          style={{ color: item.color, borderColor: item.color + '55', opacity: env.scrollFade }}
-        >
+        <div className="px-2 py-1 rounded-md text-[10px] font-mono uppercase tracking-wider whitespace-nowrap glass border" style={{ color: item.color, borderColor: item.color + '55' }}>
           {item.label}
         </div>
       </Html>
@@ -253,7 +224,7 @@ function Satellite({ item, env }) {
   );
 }
 
-function OrbitSystem({ orbit, ringColor, oi, env }) {
+function OrbitSystem({ orbit, ringColor, oi }) {
   const N = orbit.items.length;
   const satsRef = useRef([]);
   const lineRef = useRef();
@@ -310,88 +281,22 @@ function OrbitSystem({ orbit, ringColor, oi, env }) {
       </lineSegments>
 
       {orbit.items.map((item, ii) => (
-        <group key={item.label} ref={(el) => (satsRef.current[ii] = el)}>
-          <Satellite item={item} env={env} />
+        <group
+          key={item.label}
+          ref={(el) => (satsRef.current[ii] = el)}
+        >
+          <Satellite item={item} />
         </group>
       ))}
     </group>
   );
 }
 
-/* Expanding sonar-style pulse rings radiating out of the core */
-function PulseRings({ env }) {
-  const RINGS = 3;
-  const CYCLE = 4.2;
-  const refs = useRef([]);
-  const matsRef = useRef([]);
-
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    for (let i = 0; i < RINGS; i++) {
-      const mesh = refs.current[i];
-      const mat = matsRef.current[i];
-      if (!mesh || !mat) continue;
-      const p = (t / CYCLE + i / RINGS) % 1;
-      mesh.scale.setScalar(2.0 + p * 4.2);
-      mat.opacity = (1 - p) * (1 - p) * 0.3 * env.scrollFade;
-    }
-  });
-
-  return (
-    <group>
-      {Array.from({ length: RINGS }).map((_, i) => (
-        <mesh
-          key={i}
-          ref={(el) => (refs.current[i] = el)}
-          rotation={[Math.PI / 2.35, i * 0.55, 0]}
-          userData={{ keepOpaque: true }}
-        >
-          <torusGeometry args={[1, 0.01, 8, 160]} />
-          <meshBasicMaterial
-            ref={(el) => (matsRef.current[i] = el)}
-            color={i % 2 === 0 ? ACCENT : VIOLET}
-            transparent
-            opacity={0}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-          />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-/* Large slow-precessing aurora halo behind the whole system */
-function AuroraRing() {
-  const a = useRef();
-  const b = useRef();
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    if (a.current) {
-      a.current.rotation.z = t * 0.12;
-      a.current.rotation.x = Math.PI / 2.6 + Math.sin(t * 0.18) * 0.12;
-    }
-    if (b.current) {
-      b.current.rotation.z = -t * 0.09;
-      b.current.rotation.x = Math.PI / 2.1 + Math.cos(t * 0.14) * 0.1;
-    }
-  });
-  return (
-    <group>
-      <mesh ref={a} rotation={[Math.PI / 2.6, 0, 0]}>
-        <torusGeometry args={[4.6, 0.03, 8, 220]} />
-        <meshBasicMaterial color={ACCENT} transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} />
-      </mesh>
-      <mesh ref={b} rotation={[Math.PI / 2.1, 0.6, 0]}>
-        <torusGeometry args={[5.2, 0.02, 8, 220]} />
-        <meshBasicMaterial color={VIOLET} transparent opacity={0.1} blending={THREE.AdditiveBlending} depthWrite={false} />
-      </mesh>
-    </group>
-  );
-}
-
-function Comet({ color = ACCENT, cycle = 11, activeDur = 4.6, offset = 0, dir = 1, env }) {
+function Comet() {
   const TRAIL = 42;
+  const CYCLE = 11;
+  const ACTIVE = 4.6;
+
   const glowTex = useMemo(makeGlowTexture, []);
   const headRef = useRef();
   const trail = useRef(Array.from({ length: TRAIL }, () => new THREE.Vector3(0, 0, -20)));
@@ -404,43 +309,40 @@ function Comet({ color = ACCENT, cycle = 11, activeDur = 4.6, offset = 0, dir = 
   const mat = useMemo(
     () =>
       new THREE.LineBasicMaterial({
-        color,
+        color: ACCENT,
         transparent: true,
         opacity: 0,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
-    [color]
+    []
   );
   const lineObj = useMemo(() => {
     const l = new THREE.Line(geom, mat);
     l.frustumCulled = false;
-    l.userData.keepOpaque = true;
     return l;
   }, [geom, mat]);
 
   useFrame((state) => {
-    const t = (state.clock.elapsedTime + offset) % cycle;
-    const active = t <= activeDur;
-    const p = active ? t / activeDur : 0;
+    const t = state.clock.elapsedTime % CYCLE;
+    const active = t <= ACTIVE;
+    const p = active ? t / ACTIVE : 0;
     const ease = p * p * (3 - 2 * p);
-    const envelope = Math.sin(Math.min(1, p) * Math.PI);
+    const env = Math.sin(Math.min(1, p) * Math.PI);
 
-    const x0 = dir === 1 ? -13 : 13;
-    const x1 = dir === 1 ? 13 : -13;
     const pos = new THREE.Vector3(
-      THREE.MathUtils.lerp(x0, x1, ease),
+      THREE.MathUtils.lerp(-13, 13, ease),
       THREE.MathUtils.lerp(-2.4, 3.0, ease),
       THREE.MathUtils.lerp(-11, -7, ease)
     );
 
     lineObj.visible = active;
-    mat.opacity = 0.4 * envelope * env.scrollFade;
+    mat.opacity = 0.4 * env;
 
     if (headRef.current) {
       headRef.current.visible = active;
       headRef.current.position.copy(pos);
-      headRef.current.material.opacity = envelope * env.scrollFade;
+      headRef.current.material.opacity = env;
     }
 
     if (active) {
@@ -460,10 +362,10 @@ function Comet({ color = ACCENT, cycle = 11, activeDur = 4.6, offset = 0, dir = 
   return (
     <>
       <primitive object={lineObj} />
-      <sprite ref={headRef} scale={[1.1, 1.1, 1]} userData={{ keepOpaque: true }}>
+      <sprite ref={headRef} scale={[1.1, 1.1, 1]}>
         <spriteMaterial
           map={glowTex}
-          color={color}
+          color={ACCENT}
           transparent
           opacity={0}
           blending={THREE.AdditiveBlending}
@@ -474,75 +376,27 @@ function Comet({ color = ACCENT, cycle = 11, activeDur = 4.6, offset = 0, dir = 
   );
 }
 
-function ParallaxRig({ children, env }) {
+function ParallaxRig({ children }) {
   const ref = useRef();
   const { size } = useThree();
   const wide = size.width >= 1024;
-  const scrollY = useRef(0);
-  const prevPointer = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const onScroll = () => {
-      scrollY.current = window.scrollY;
-    };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   useFrame((state, delta) => {
     if (!ref.current) return;
     const baseX = wide ? 3.05 : 0;
     const baseScale = wide ? 1 : 0.68;
-
-    const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
-    const p = Math.min(1, scrollY.current / (vh * 0.85));
-    const eased = p * p * (3 - 2 * p);
-    const scrollLift = eased * 2.6;
-    env.scrollFade = 1 - eased;
-
     const { x: px, y: py } = state.pointer;
-
-    // pointer velocity -> inertial "swing" whip
-    const vx = px - prevPointer.current.x;
-    const vy = py - prevPointer.current.y;
-    prevPointer.current = { x: px, y: py };
-    const whipX = THREE.MathUtils.clamp(vx * 4, -0.55, 0.55);
-    const whipY = THREE.MathUtils.clamp(vy * 3, -0.4, 0.4);
-
-    ref.current.position.x = THREE.MathUtils.damp(ref.current.position.x, baseX + px * 0.42, 2.5, delta);
-    ref.current.position.y = THREE.MathUtils.damp(
-      ref.current.position.y,
-      py * 0.26 + scrollLift,
-      2.5,
-      delta
-    );
-    ref.current.rotation.y = THREE.MathUtils.damp(ref.current.rotation.y, px * 0.3 + whipX, 2.5, delta);
-    ref.current.rotation.x = THREE.MathUtils.damp(
-      ref.current.rotation.x,
-      -py * 0.2 - eased * 0.35 + whipY,
-      2.5,
-      delta
-    );
+    ref.current.position.x = THREE.MathUtils.damp(ref.current.position.x, baseX + px * 0.3, 2.5, delta);
+    ref.current.position.y = THREE.MathUtils.damp(ref.current.position.y, py * 0.18, 2.5, delta);
+    ref.current.rotation.y = THREE.MathUtils.damp(ref.current.rotation.y, px * 0.22, 2.5, delta);
+    ref.current.rotation.x = THREE.MathUtils.damp(ref.current.rotation.x, -py * 0.14, 2.5, delta);
     ref.current.scale.setScalar(THREE.MathUtils.damp(ref.current.scale.x, baseScale, 2.5, delta));
-
-    ref.current.traverse((obj) => {
-      if (obj.material && 'opacity' in obj.material && !obj.userData.keepOpaque) {
-        if (!obj.userData.baseOpacitySet) {
-          obj.userData.baseOpacity = obj.material.opacity;
-          obj.userData.baseOpacitySet = true;
-        }
-        obj.material.opacity = obj.userData.baseOpacity * env.scrollFade;
-      }
-    });
   });
 
   return <group ref={ref}>{children}</group>;
 }
 
 export default function HeroScene() {
-  const env = useMemo(() => ({ scrollFade: 1 }), []);
-
   if (typeof window !== 'undefined' && !isWebGLAvailable()) {
     return (
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
@@ -570,25 +424,20 @@ export default function HeroScene() {
 
         <Stars radius={70} depth={45} count={1400} factor={3.2} saturation={0.35} fade speed={0.5} />
 
-        <Comet color={ACCENT} cycle={11} activeDur={4.6} offset={0} dir={1} env={env} />
-        <Comet color={VIOLET} cycle={17} activeDur={5.4} offset={6} dir={-1} env={env} />
+        <Comet />
 
-        <ParallaxRig env={env}>
+        <ParallaxRig>
           <Float speed={1.4} rotationIntensity={0.25} floatIntensity={0.35}>
             <NeuralCore />
           </Float>
 
-          <PulseRings env={env} />
-
           {ORBITS.map((orbit, oi) => (
-            <OrbitSystem key={oi} orbit={orbit} ringColor={oi % 2 === 0 ? ACCENT : VIOLET} oi={oi} env={env} />
+            <OrbitSystem key={oi} orbit={orbit} ringColor={oi % 2 === 0 ? ACCENT : VIOLET} oi={oi} />
           ))}
 
           <Sparkles count={90} scale={10} size={2} speed={0.28} color={ACCENT} opacity={0.55} />
           <Sparkles count={50} scale={12} size={3.5} speed={0.2} color={VIOLET} opacity={0.4} />
         </ParallaxRig>
-
-        <AuroraRing />
       </Suspense>
     </Canvas>
   );
