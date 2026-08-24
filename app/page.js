@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import {
   Github, ExternalLink, Mail, Linkedin, Code2, Cpu, Rocket, Trophy,
   ArrowRight, MapPin, Calendar, Sparkles as SparklesIcon, Zap, Brain,
-  Terminal, Box, Satellite, Loader2, Play
+  Terminal, Box, Satellite, Loader2, Play, BarChart3, BadgeCheck
 } from 'lucide-react';
 
 const HeroScene = dynamic(() => import('@/components/three/HeroScene'), { ssr: false, loading: () => null });
@@ -22,7 +22,7 @@ const GuidePath = dynamic(() => import('@/components/three/GuidePath'), { ssr: f
 const PROFILE = {
   name: 'Kumar Abhishek',
   tagline: 'Computer Science Engineer — AI & Robotics',
-  summary: 'Third-year CS engineer building AI-powered products end-to-end — from dual-LLM interview systems to civic-tech geospatial platforms — with 1,050+ LeetCode problems solved and multiple national/global hackathon podiums.',
+  summary: 'Third-year CS engineer building AI-powered products end-to-end — from dual-LLM interview systems to civic-tech geospatial platforms — with 1,100+ LeetCode problems solved and multiple national/global hackathon podiums.',
   education: 'B.Tech CSE (AI & Robotics), VIT Chennai — graduating 2028',
   cgpa: '10.0/10.0 (core CS) · 8.47/10 overall',
   location: 'Chennai, India',
@@ -30,7 +30,7 @@ const PROFILE = {
 
 const STATS = [
   { value: '10.0', suffix: '', label: 'CGPA (Core CS)', icon: Trophy },
-  { value: '1050', suffix: '+', label: 'LeetCode Solved', icon: Code2 },
+  { value: '1100', suffix: '+', label: 'LeetCode Solved', icon: Code2 },
   { value: '5', suffix: '+', label: 'Projects Shipped', icon: Rocket },
   { value: '3', suffix: 'rd', label: 'Global Hackathon (BITS)', icon: SparklesIcon },
 ];
@@ -105,7 +105,7 @@ const PROJECTS = [
     slug: 'sentinelops',
     title: 'SentinelOps',
     category: 'Systems',
-    status: 'completed',
+    status: 'in_progress',
     featured: false,
     tagline: 'A Kubernetes operator that detects anomalies and heals your cluster before you even notice.',
     description: 'Self-healing Kubernetes operator using Prometheus/Loki telemetry, Isolation Forest/LSTM anomaly detection, and an LLM-based decision engine with OPA (Open Policy Agent) guardrails to safely automate remediation actions.',
@@ -115,35 +115,51 @@ const PROJECTS = [
     live_url: null,
     github_url: 'https://github.com/kumarabhishek/sentinelops',
   },
-  {
-    slug: 'space-debris',
-    title: 'Space Debris Detection',
-    category: 'Robotics',
-    status: 'in_progress',
-    featured: false,
-    tagline: 'Detecting and predicting collision risk for orbital debris in real time.',
-    description: 'SIH 2026 problem statement. Vision + orbital-mechanics pipeline for real-time debris detection and collision avoidance planning.',
-    tech: ['Python', 'CV', 'Orbital Mechanics'],
-    accent: 'violet',
-    icon: Satellite,
-    live_url: null,
-    github_url: null,
-  },
 ];
 
 const EXPERIENCE = [
-  { year: '2025', title: 'Research Intern — VIT Chennai SRIP', desc: 'Built and published research around Prepwise (AI interview platform). IEEE-style literature comparison and technical documentation.' },
-  { year: '2025', title: 'Smart India Hackathon 2026 — Competing', desc: 'BATT-X (EV Battery RUL) and Space Debris Detection & Collision Avoidance.' },
-  { year: '2024', title: 'Infosys Springboard — Virtual Intern', desc: 'Completed virtual internship program with hands-on industry modules.' },
-  { year: '2024', title: 'Enginow AI-Thon (BITS Pilani) — 3rd Place Global', desc: 'Global podium finish among international competitors.' },
-  { year: '2024', title: 'NEOCODEATHON — Top 10 Finalist', desc: 'National coding competition finalist.' },
+  { year: '2026', title: 'Research Intern — VIT Chennai SRIP', desc: 'Built and published research around Prepwise (AI interview platform). IEEE-style literature comparison and technical documentation.' },
+  { year: '2026', title: 'Smart India Hackathon 2026 — Competing', desc: 'BATT-X (EV Battery RUL) and Space Debris Detection & Collision Avoidance.' },
+  { year: '2026', title: 'Infosys Springboard — Virtual Intern', desc: 'Completed virtual internship program with hands-on industry modules.' },
+  { year: '2025', title: 'Enginow AI-Thon (BITS Pilani) — 3rd Place Global', desc: 'Global podium finish among international competitors.' },
+  { year: '2025', title: 'CodeRush (DSA-based Coding Contest)', desc: 'Secured 5th Rank.' },
+  { year: '2025', title: 'NEOCODEATHON — Top 10 Finalist', desc: 'National coding competition finalist.' },
 ];
 
 const CERTIFICATIONS = [
-  { title: 'Infosys Springboard Virtual Internship', issuer: 'Infosys', color: 'cyan' },
-  { title: 'VIT Chennai SRIP Completion', issuer: 'VIT Chennai', color: 'violet' },
-  { title: 'Enginow AI-Thon — 3rd Place Global', issuer: 'BITS Pilani', color: 'cyan' },
-  { title: 'NEOCODEATHON Top 10 Finalist', issuer: 'NEOCODEATHON', color: 'violet' },
+  {
+    title: 'Programming Certifications — Python, C & C++',
+    issuer: 'IIT Bombay & MHRD, Government of India',
+    desc: 'Certified by IIT Bombay and MHRD, Government of India.',
+    scores: [
+      { label: 'Python', value: 80 },
+      { label: 'C', value: 92 },
+      { label: 'C++', value: 92 },
+    ],
+    color: 'cyan',
+    icon: BadgeCheck,
+  },
+  {
+    title: 'AWS AI Practitioner Challenge',
+    issuer: 'Udacity × AWS',
+    desc: 'AI fundamentals, generative AI concepts, and practical AWS AI applications.',
+    color: 'violet',
+    icon: Brain,
+  },
+  {
+    title: 'AI Skills Passport',
+    issuer: 'EY & Microsoft',
+    desc: 'Certificate of Completion — applied AI skills program.',
+    color: 'cyan',
+    icon: SparklesIcon,
+  },
+  {
+    title: 'Data Analytics Job Simulation',
+    issuer: 'Deloitte Australia (Forage)',
+    desc: 'Certificate of Completion — hands-on data analytics job simulation.',
+    color: 'violet',
+    icon: BarChart3,
+  },
 ];
 
 // ============ COMPONENTS ============
@@ -161,6 +177,7 @@ function Navbar() {
     { href: '#skills', label: 'Skills' },
     { href: '#projects', label: 'Projects' },
     { href: '#timeline', label: 'Timeline' },
+    { href: '#certifications', label: 'Certifications' },
     { href: '#contact', label: 'Contact' },
   ];
 
@@ -536,27 +553,52 @@ function Certifications() {
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
           <p className="text-primary font-mono text-sm uppercase tracking-widest mb-4">// credentials</p>
           <h2 className="font-display text-4xl md:text-6xl font-bold mb-16">
-            Recognition &amp; <span className="gradient-text">certifications.</span>
+            Certified &amp; <span className="gradient-text">verified.</span>
           </h2>
-          <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide">
+          <div className="grid md:grid-cols-2 gap-6">
             {CERTIFICATIONS.map((c, i) => (
               <motion.div
                 key={c.title}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ rotateY: 8, rotateX: -4, scale: 1.02 }}
-                className="shrink-0 w-80 snap-center"
-                style={{ perspective: 1000 }}
+                transition={{ delay: i * 0.08, duration: 0.5 }}
               >
-                <Card className={`glass border-white/5 p-8 h-56 flex flex-col justify-between relative overflow-hidden hover:${c.color === 'cyan' ? 'glow-cyan' : 'glow-violet'} transition-all`}>
-                  <div className={`absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-15 blur-3xl`} style={{ background: c.color === 'cyan' ? '#22d3ee' : '#a855f7' }} />
-                  <div>
-                    <Trophy className={`w-8 h-8 mb-4 ${c.color === 'cyan' ? 'text-primary' : 'text-accent'}`} />
-                    <h3 className="font-display text-lg font-bold leading-tight mb-2">{c.title}</h3>
+                <Card className={`glass border-white/5 p-8 h-full flex flex-col relative overflow-hidden group hover:border-white/20 transition-all ${c.color === 'cyan' ? 'hover:glow-cyan' : 'hover:glow-violet'}`}>
+                  <div
+                    className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-15 blur-3xl group-hover:opacity-30 transition-opacity pointer-events-none"
+                    style={{ background: c.color === 'cyan' ? '#22d3ee' : '#a855f7' }}
+                  />
+                  <div className="flex items-start justify-between mb-5 relative">
+                    <div className={`p-3 rounded-xl bg-white/5 border ${c.color === 'cyan' ? 'text-primary border-primary/40' : 'text-accent border-accent/40'} group-hover:scale-110 transition-transform`}>
+                      <c.icon className="w-5 h-5" />
+                    </div>
+                    <Badge variant="outline" className={`${c.color === 'cyan' ? 'text-primary border-primary/40' : 'text-accent border-accent/40'} bg-transparent text-[10px] uppercase tracking-wider`}>
+                      • Verified
+                    </Badge>
                   </div>
-                  <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground">{c.issuer}</div>
+                  <h3 className="font-display text-xl font-bold leading-snug mb-2 relative">{c.title}</h3>
+                  <p className={`text-xs font-mono uppercase tracking-widest mb-3 relative ${c.color === 'cyan' ? 'text-primary/90' : 'text-accent/90'}`}>{c.issuer}</p>
+                  <p className="text-sm text-muted-foreground mb-4 relative">{c.desc}</p>
+                  {c.scores && (
+                    <div className="mt-auto space-y-3 relative pt-4 border-t border-white/5">
+                      {c.scores.map((s, si) => (
+                        <div key={s.label} className="flex items-center gap-3">
+                          <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground w-12 shrink-0">{s.label}</span>
+                          <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              whileInView={{ width: `${s.value}%` }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 1, delay: 0.3 + si * 0.15, ease: 'easeOut' }}
+                              className={`h-full rounded-full ${c.color === 'cyan' ? 'bg-gradient-to-r from-primary/60 to-primary glow-cyan' : 'bg-gradient-to-r from-accent/60 to-accent glow-violet'}`}
+                            />
+                          </div>
+                          <span className={`text-[11px] font-mono shrink-0 ${c.color === 'cyan' ? 'text-primary' : 'text-accent'}`}>{s.value}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Card>
               </motion.div>
             ))}
@@ -657,9 +699,9 @@ function Contact() {
 
             <div className="space-y-4">
               {[
-                { icon: Mail, label: 'Email', value: 'kumar.abhishek@vitstudent.ac.in', href: 'mailto:kumar.abhishek@vitstudent.ac.in' },
-                { icon: Github, label: 'GitHub', value: '@kumarabhishek', href: 'https://github.com' },
-                { icon: Linkedin, label: 'LinkedIn', value: 'Kumar Abhishek', href: 'https://linkedin.com' },
+                { icon: Mail, label: 'Email', value: 'kabhishek76673@gmail.com', href: 'mailto:kabhishek76673@gmail.com' },
+                { icon: Github, label: 'GitHub', value: '@kumarabhishek-1025', href: 'https://github.com/kumarabhishek-1025' },
+                { icon: Linkedin, label: 'LinkedIn', value: 'Kumar Abhishek', href: 'https://www.linkedin.com/in/kumar-abhishek-62573029a/' },
                 { icon: MapPin, label: 'Based in', value: 'Chennai, India', href: null },
               ].map(c => (
                 <motion.a
@@ -715,8 +757,8 @@ function App() {
       <About />
       <Skills />
       <Projects />
-      <Certifications />
       <Timeline />
+      <Certifications />
       <Contact />
       <Footer />
     </main>
