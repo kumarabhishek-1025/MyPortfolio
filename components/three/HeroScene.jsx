@@ -1,7 +1,7 @@
 "use client";
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Icosahedron, Sparkles, Html, Float, Stars } from '@react-three/drei';
-import { useRef, useMemo, Suspense } from 'react';
+import { useRef, useMemo, useEffect, Suspense } from 'react';
 import * as THREE from 'three';
 import { isWebGLAvailable } from '@/lib/webgl';
 
@@ -48,7 +48,7 @@ function NeuralCore() {
   const meshRef = useRef();
   const wireRef = useRef();
   const outerRef = useRef();
-  const coreMatRef = useRef();
+  const nucleusMatRef = useRef();
   const fresnelMatRef = useRef();
 
   const fresnelUniforms = useMemo(
@@ -75,8 +75,8 @@ function NeuralCore() {
       outerRef.current.rotation.y += delta * 0.06;
       outerRef.current.rotation.z -= delta * 0.04;
     }
-    if (coreMatRef.current) {
-      coreMatRef.current.emissiveIntensity = 0.35 + Math.sin(t * 1.8) * 0.15;
+    if (nucleusMatRef.current) {
+      nucleusMatRef.current.emissiveIntensity = 1.6 + Math.sin(t * 1.8) * 0.25;
     }
     if (fresnelMatRef.current) {
       fresnelMatRef.current.uniforms.uIntensity.value = 1.0 + Math.sin(t * 1.2) * 0.25;
@@ -89,7 +89,7 @@ function NeuralCore() {
       <mesh>
         <sphereGeometry args={[0.5, 32, 32]} />
         <meshStandardMaterial
-          ref={coreMatRef}
+          ref={nucleusMatRef}
           color={ACCENT}
           emissive={ACCENT}
           emissiveIntensity={1.6}
@@ -281,10 +281,7 @@ function OrbitSystem({ orbit, ringColor, oi }) {
       </lineSegments>
 
       {orbit.items.map((item, ii) => (
-        <group
-          key={item.label}
-          ref={(el) => (satsRef.current[ii] = el)}
-        >
+        <group key={item.label} ref={(el) => (satsRef.current[ii] = el)}>
           <Satellite item={item} />
         </group>
       ))}
@@ -292,11 +289,8 @@ function OrbitSystem({ orbit, ringColor, oi }) {
   );
 }
 
-function Comet() {
+function Comet({ color = ACCENT, cycle = 11, activeDur = 4.6, offset = 0, dir = 1 }) {
   const TRAIL = 42;
-  const CYCLE = 11;
-  const ACTIVE = 4.6;
-
   const glowTex = useMemo(makeGlowTexture, []);
   const headRef = useRef();
   const trail = useRef(Array.from({ length: TRAIL }, () => new THREE.Vector3(0, 0, -20)));
@@ -309,13 +303,13 @@ function Comet() {
   const mat = useMemo(
     () =>
       new THREE.LineBasicMaterial({
-        color: ACCENT,
+        color,
         transparent: true,
         opacity: 0,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
-    []
+    [color]
   );
   const lineObj = useMemo(() => {
     const l = new THREE.Line(geom, mat);
@@ -324,25 +318,27 @@ function Comet() {
   }, [geom, mat]);
 
   useFrame((state) => {
-    const t = state.clock.elapsedTime % CYCLE;
-    const active = t <= ACTIVE;
-    const p = active ? t / ACTIVE : 0;
+    const t = (state.clock.elapsedTime + offset) % cycle;
+    const active = t <= activeDur;
+    const p = active ? t / activeDur : 0;
     const ease = p * p * (3 - 2 * p);
-    const env = Math.sin(Math.min(1, p) * Math.PI);
+    const envelope = Math.sin(Math.min(1, p) * Math.PI);
 
+    const x0 = dir === 1 ? -13 : 13;
+    const x1 = dir === 1 ? 13 : -13;
     const pos = new THREE.Vector3(
-      THREE.MathUtils.lerp(-13, 13, ease),
+      THREE.MathUtils.lerp(x0, x1, ease),
       THREE.MathUtils.lerp(-2.4, 3.0, ease),
       THREE.MathUtils.lerp(-11, -7, ease)
     );
 
     lineObj.visible = active;
-    mat.opacity = 0.4 * env;
+    mat.opacity = 0.4 * envelope;
 
     if (headRef.current) {
       headRef.current.visible = active;
       headRef.current.position.copy(pos);
-      headRef.current.material.opacity = env;
+      headRef.current.material.opacity = envelope;
     }
 
     if (active) {
@@ -365,7 +361,7 @@ function Comet() {
       <sprite ref={headRef} scale={[1.1, 1.1, 1]}>
         <spriteMaterial
           map={glowTex}
-          color={ACCENT}
+          color={color}
           transparent
           opacity={0}
           blending={THREE.AdditiveBlending}
@@ -380,17 +376,50 @@ function ParallaxRig({ children }) {
   const ref = useRef();
   const { size } = useThree();
   const wide = size.width >= 1024;
+  const scrollY = useRef(0);
+
+  useEffect(() => {
+    const onScroll = () => {
+      scrollY.current = window.scrollY;
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useFrame((state, delta) => {
     if (!ref.current) return;
     const baseX = wide ? 3.05 : 0;
     const baseScale = wide ? 1 : 0.68;
+
+    // Scroll-driven exit: gentle rise + full fade BEFORE orbits can clip at viewport bottom
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
+    const p = Math.min(1, scrollY.current / (vh * 0.55));
+    const eased = p * p * (3 - 2 * p);
+    const scrollLift = eased * 1.4;
+    const opacity = Math.max(0, 1 - eased);
+
     const { x: px, y: py } = state.pointer;
     ref.current.position.x = THREE.MathUtils.damp(ref.current.position.x, baseX + px * 0.3, 2.5, delta);
-    ref.current.position.y = THREE.MathUtils.damp(ref.current.position.y, py * 0.18, 2.5, delta);
+    ref.current.position.y = THREE.MathUtils.damp(
+      ref.current.position.y,
+      py * 0.18 + scrollLift,
+      2.5,
+      delta
+    );
     ref.current.rotation.y = THREE.MathUtils.damp(ref.current.rotation.y, px * 0.22, 2.5, delta);
-    ref.current.rotation.x = THREE.MathUtils.damp(ref.current.rotation.x, -py * 0.14, 2.5, delta);
+    ref.current.rotation.x = THREE.MathUtils.damp(ref.current.rotation.x, -py * 0.14 - eased * 0.35, 2.5, delta);
     ref.current.scale.setScalar(THREE.MathUtils.damp(ref.current.scale.x, baseScale, 2.5, delta));
+
+    ref.current.traverse((obj) => {
+      if (obj.material && 'opacity' in obj.material && !obj.userData.keepOpaque) {
+        if (!obj.userData.baseOpacitySet) {
+          obj.userData.baseOpacity = obj.material.opacity;
+          obj.userData.baseOpacitySet = true;
+        }
+        obj.material.opacity = obj.userData.baseOpacity * Math.max(0, opacity);
+      }
+    });
   });
 
   return <group ref={ref}>{children}</group>;

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { motion, AnimatePresence, useScroll, useTransform, useInView } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform, useInView, useMotionValue, useSpring } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -729,6 +729,118 @@ function Contact() {
   );
 }
 
+function CursorAura() {
+  const mx = useMotionValue(-100);
+  const my = useMotionValue(-100);
+  const auraX = useSpring(mx, { stiffness: 180, damping: 22, mass: 0.7 });
+  const auraY = useSpring(my, { stiffness: 180, damping: 22, mass: 0.7 });
+  const trailX = useSpring(mx, { stiffness: 320, damping: 30, mass: 0.5 });
+  const trailY = useSpring(my, { stiffness: 320, damping: 30, mass: 0.5 });
+  const [active, setActive] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [ripples, setRipples] = useState([]);
+  const rippleId = useRef(0);
+
+  useEffect(() => {
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+    const onMove = (e) => {
+      mx.set(e.clientX);
+      my.set(e.clientY);
+      setVisible(true);
+      setActive(!!(e.target.closest && e.target.closest('a, button, [role="button"], input, textarea, label, .cursor-pointer')));
+    };
+    const onDown = (e) => {
+      const id = ++rippleId.current;
+      setRipples((r) => [...r.slice(-4), { id, x: e.clientX, y: e.clientY }]);
+      setTimeout(() => setRipples((r) => r.filter((p) => p.id !== id)), 650);
+    };
+    const onLeave = () => setVisible(false);
+    window.addEventListener('mousemove', onMove, { passive: true });
+    window.addEventListener('mousedown', onDown);
+    document.documentElement.addEventListener('mouseleave', onLeave);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mousedown', onDown);
+      document.documentElement.removeEventListener('mouseleave', onLeave);
+    };
+  }, []);
+
+  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
+    return null;
+  }
+
+  return (
+    <>
+      {/* soft trailing aura */}
+      <motion.div
+        aria-hidden
+        className="fixed top-0 left-0 z-[60] pointer-events-none rounded-full"
+        style={{
+          x: auraX,
+          y: auraY,
+          translateX: '-50%',
+          translateY: '-50%',
+          width: active ? 72 : 44,
+          height: active ? 72 : 44,
+          background:
+            'radial-gradient(circle, rgba(34,211,238,0.16) 0%, rgba(168,85,247,0.08) 45%, transparent 70%)',
+          filter: 'blur(1px)',
+          opacity: visible ? 1 : 0,
+          transition: 'width 0.3s ease, height 0.3s ease, opacity 0.35s ease',
+        }}
+      />
+      {/* crisp trailing ring */}
+      <motion.div
+        aria-hidden
+        className="fixed top-0 left-0 z-[60] pointer-events-none rounded-full"
+        style={{
+          x: trailX,
+          y: trailY,
+          translateX: '-50%',
+          translateY: '-50%',
+          width: active ? 40 : 26,
+          height: active ? 40 : 26,
+          border: `1px solid ${active ? 'rgba(34,211,238,0.8)' : 'rgba(34,211,238,0.45)'}`,
+          boxShadow: active ? '0 0 18px 2px rgba(34,211,238,0.25)' : 'none',
+          opacity: visible ? (active ? 1 : 0.7) : 0,
+          transition: 'width 0.25s ease, height 0.25s ease, border-color 0.25s ease',
+        }}
+      />
+      {/* exact dot */}
+      <motion.div
+        aria-hidden
+        className="fixed top-0 left-0 z-[61] pointer-events-none rounded-full bg-primary"
+        style={{
+          x: mx,
+          y: my,
+          translateX: '-50%',
+          translateY: '-50%',
+          width: active ? 9 : 6,
+          height: active ? 9 : 6,
+          boxShadow: '0 0 12px 3px rgba(34,211,238,0.65)',
+          opacity: visible ? 1 : 0,
+          transition: 'width 0.2s ease, height 0.2s ease',
+        }}
+      />
+      {/* click ripples */}
+      <AnimatePresence>
+        {ripples.map((r) => (
+          <motion.span
+            key={r.id}
+            aria-hidden
+            className="fixed z-[59] pointer-events-none rounded-full border border-primary/60"
+            style={{ left: r.x, top: r.y, translateX: '-50%', translateY: '-50%' }}
+            initial={{ width: 8, height: 8, opacity: 0.8 }}
+            animate={{ width: 90, height: 90, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          />
+        ))}
+      </AnimatePresence>
+    </>
+  );
+}
+
 function Footer() {
   const currentlyBuilding = PROJECTS.find(p => p.status === 'in_progress');
   return (
@@ -752,6 +864,7 @@ function App() {
   return (
     <main className="relative min-h-screen bg-background text-foreground">
       <GuidePath />
+      <CursorAura />
       <Navbar />
       <Hero />
       <About />
