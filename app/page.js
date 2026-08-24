@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { motion, AnimatePresence, useScroll, useTransform, useInView } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform, useInView, useMotionValue, useSpring } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -729,6 +729,69 @@ function Contact() {
   );
 }
 
+function CursorAura() {
+  const x = useMotionValue(-100);
+  const y = useMotionValue(-100);
+  const sx = useSpring(x, { stiffness: 260, damping: 28, mass: 0.6 });
+  const sy = useSpring(y, { stiffness: 260, damping: 28, mass: 0.6 });
+  const [active, setActive] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const onMove = (e) => {
+      x.set(e.clientX);
+      y.set(e.clientY);
+      setVisible(true);
+      const t = e.target;
+      setActive(!!t.closest && !!t.closest('a, button, [role="button"], input, textarea, label'));
+    };
+    const onLeave = () => setVisible(false);
+    window.addEventListener('mousemove', onMove, { passive: true });
+    document.documentElement.addEventListener('mouseleave', onLeave);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      document.documentElement.removeEventListener('mouseleave', onLeave);
+    };
+  }, []);
+
+  return (
+    <>
+      <motion.div
+        aria-hidden
+        className="fixed z-[60] pointer-events-none rounded-full"
+        style={{
+          left: sx,
+          top: sy,
+          x: '-50%',
+          y: '-50%',
+          width: active ? 56 : 36,
+          height: active ? 56 : 36,
+          border: '1px solid rgba(34,211,238,0.55)',
+          background:
+            'radial-gradient(circle, rgba(34,211,238,0.12) 0%, rgba(168,85,247,0.06) 45%, transparent 70%)',
+          opacity: visible ? (active ? 0.95 : 0.6) : 0,
+          transition: 'width 0.25s ease, height 0.25s ease, opacity 0.3s ease',
+          mixBlendMode: 'screen',
+        }}
+      />
+      <motion.div
+        aria-hidden
+        className="fixed z-[60] pointer-events-none rounded-full bg-primary"
+        style={{
+          left: x,
+          top: y,
+          x: '-50%',
+          y: '-50%',
+          width: 6,
+          height: 6,
+          boxShadow: '0 0 10px 2px rgba(34,211,238,0.8)',
+          opacity: visible ? 1 : 0,
+        }}
+      />
+    </>
+  );
+}
+
 function Footer() {
   const currentlyBuilding = PROJECTS.find(p => p.status === 'in_progress');
   return (
@@ -752,6 +815,7 @@ function App() {
   return (
     <main className="relative min-h-screen bg-background text-foreground">
       <GuidePath />
+      <CursorAura />
       <Navbar />
       <Hero />
       <About />
