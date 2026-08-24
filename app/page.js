@@ -56,7 +56,7 @@ const PROJECTS = [
     tech: ['Next.js 14', 'R3F', 'Groq LLaMA 3.3', 'Gemini API', 'ElevenLabs', 'Supabase'],
     accent: 'cyan',
     icon: Brain,
-    live_url: 'https://prepwise-demo.vercel.app',
+    live_url: 'https://prep-wise-ai-mock-interviewer-4mkgwquea.vercel.app/',
     github_url: 'https://github.com/kumarabhishek/prepwise',
   },
   {
@@ -485,7 +485,7 @@ function ProjectCard({ p, index }) {
               </div>
             )}
             {live && p.live_url && (
-              <iframe
+              <iframe onError={() => window.open(p.live_url, "_blank")}
                 src={p.live_url}
                 className="w-full h-full border-0"
                 sandbox="allow-scripts allow-same-origin allow-forms"
@@ -724,3 +724,4 @@ function App() {
 }
 
 export default App;
+
